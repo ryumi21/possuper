@@ -24,6 +24,10 @@ class PosController extends Controller
             });
         }
 
+        if ($request->has('type') && $request->type != '' && $request->type != 'All') {
+            $query->where('Type', $request->type);
+        }
+
         return response()->json($query->paginate(20));
     }
 }

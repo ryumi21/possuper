@@ -43,10 +43,10 @@
         </div>
     @endif
 
-    <div class="card border-0 shadow-sm" style="border-radius: 10px;">
+    <div class="card border-0 shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0 premium-table-grid">
                     <thead class="table-light text-muted">
                         <tr style="font-size: 0.85rem;">
                             <th class="ps-4">Code</th>
@@ -63,8 +63,8 @@
                             <tr style="font-size: 0.9rem;">
                                 <td class="ps-4 fw-medium text-dark">{{ $product->Code }}</td>
                                 <td class="text-muted">{{ $product->Name }}</td>
-                                <td><span class="badge bg-light text-dark fw-normal">{{ $product->Type }}</span></td>
-                                <td class="fw-bold text-dark">${{ number_format($product->Price, 2) }}</td>
+                                <td><span class="badge bg-light text-secondary fw-semibold" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">{{ $product->Type }}</span></td>
+                                <td class="fw-bold text-dark">Rp {{ number_format($product->Price, 0, ',', '.') }}</td>
                                 <td>
                                     @if ($product->IsStock)
                                         <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1"><i class="bi bi-check-circle me-1"></i> In Stock</span>
@@ -81,13 +81,13 @@
                                 </td>
                                 <td class="text-end pe-4">
                                     <div class="d-flex justify-content-end gap-2">
-                                        <a href="{{ route('products.edit', $product->Oid) }}" class="btn btn-sm btn-light border" data-bs-toggle="tooltip" title="Edit">
+                                        <a href="{{ route('products.edit', $product->Oid) }}" class="premium-btn-icon" data-bs-toggle="tooltip" title="Edit">
                                             <i class="bi bi-pencil text-warning"></i>
                                         </a>
                                         <form action="{{ route('products.destroy', $product->Oid) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this product?');">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-light border" data-bs-toggle="tooltip" title="Delete">
+                                            <button type="submit" class="premium-btn-icon delete-btn" data-bs-toggle="tooltip" title="Delete">
                                                 <i class="bi bi-trash text-danger"></i>
                                             </button>
                                         </form>
@@ -175,5 +175,56 @@
     });
 </script>
 @endif
+
+<style>
+    .premium-table-grid th, .premium-table-grid td {
+        border-bottom: 1px solid #f1f5f9 !important;
+        vertical-align: middle;
+        color: #475569;
+        padding: 14px 16px !important;
+        border-top: none !important;
+    }
+    .premium-table-grid th {
+        background-color: #f8fafc !important;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e2e8f0 !important;
+    }
+    .premium-table-grid tbody tr {
+        transition: background-color 0.2s ease;
+    }
+    .premium-table-grid tbody tr:hover {
+        background-color: rgba(255, 159, 67, 0.02) !important;
+    }
+    
+    .premium-btn-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(226, 232, 240, 0.8) !important;
+        background-color: #ffffff;
+        text-decoration: none;
+    }
+    .premium-btn-icon:hover {
+        transform: translateY(-2px);
+        background-color: var(--theme-orange-bg) !important;
+        border-color: rgba(255, 159, 67, 0.2) !important;
+        box-shadow: var(--premium-shadow-sm);
+    }
+    .premium-btn-icon.delete-btn:hover {
+        background-color: rgba(239, 68, 68, 0.05) !important;
+        border-color: rgba(239, 68, 68, 0.1) !important;
+    }
+    .premium-btn-icon.delete-btn:hover i {
+        color: #dc2626 !important;
+    }
+</style>
 
 @endsection

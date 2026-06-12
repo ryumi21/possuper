@@ -184,6 +184,17 @@
                     overlay.classList.remove('active');
                 });
             }
+
+            // Fetch Global Config API
+            fetch('/api/config')
+                .then(response => response.json())
+                .then(data => {
+                    if(data.status === 'success') {
+                        window.AppConfig = data.data;
+                        console.log('AppConfig loaded:', window.AppConfig);
+                    }
+                })
+                .catch(err => console.error('Error loading config:', err));
         });
     </script>
     @stack('scripts')

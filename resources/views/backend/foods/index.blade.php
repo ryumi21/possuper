@@ -1,17 +1,17 @@
 @extends('layouts.backend.app')
 
-@section('title', 'Tri Fusion')
+@section('title', 'Tri Fusion - Menu & Item')
 
 @section('content')
 <div class="container-fluid px-0">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h3 class="mb-1 fw-bold text-dark" style="font-size: 1.5rem;">Products list</h3>
-            <p class="text-muted mb-0" style="font-size: 0.85rem;">Manage your store products via API</p>
+            <h3 class="mb-1 fw-bold text-dark" style="font-size: 1.5rem;">Menu & Item List</h3>
+            <p class="text-muted mb-0" style="font-size: 0.85rem;">Manage your store menu and items via API</p>
         </div>
         <div>
-            <button type="button" data-bs-toggle="modal" data-bs-target="#createProductModal" class="btn btn-warning text-white fw-bold d-flex align-items-center px-3 py-2" style="font-size: 0.85rem; border-color: #e2e8f0; border-radius: 8px; background-color: var(--theme-orange); border: none;">
-                <i class="bi bi-plus-circle me-2"></i> Add New Product
+            <button type="button" data-bs-toggle="modal" data-bs-target="#createFoodModal" class="btn btn-warning text-white fw-bold d-flex align-items-center px-3 py-2" style="font-size: 0.85rem; border-color: #e2e8f0; border-radius: 8px; background-color: var(--theme-orange); border: none;">
+                <i class="bi bi-plus-circle me-2"></i> Add New Menu/Item
             </button>
         </div>
     </div>
@@ -21,21 +21,21 @@
     <div class="card border-0 shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0 premium-table-grid" id="productsTable">
+                <table class="table table-hover align-middle mb-0 premium-table-grid" id="foodsTable">
                     <thead class="table-light text-muted">
                         <tr style="font-size: 0.85rem;">
                             <th class="ps-4">Code</th>
                             <th>Name</th>
                             <th>Type</th>
                             <th>Price</th>
-                            <th>Buy Price</th>
+                            <th>Harga Modal / HPP</th>
                             <th>Sell Price</th>
                             <th>Stock</th>
                             <th>Status</th>
                             <th class="text-end pe-4">Action</th>
                         </tr>
                     </thead>
-                    <tbody id="productsTableBody">
+                    <tbody id="foodsTableBody">
                         <tr>
                             <td colspan="9" class="text-center py-4 text-muted">Loading data from API...</td>
                         </tr>
@@ -46,29 +46,29 @@
     </div>
 </div>
 
-<!-- Create/Edit Product Modal -->
-<div class="modal fade" id="createProductModal" tabindex="-1" aria-hidden="true">
+<!-- Create/Edit Food Modal -->
+<div class="modal fade" id="createFoodModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow" style="border-radius: 12px;">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold text-dark" id="modalTitle">Add New Product</h5>
+                <h5 class="modal-title fw-bold text-dark" id="modalTitle">Add New Menu/Item</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <form id="productForm">
-                    <input type="hidden" id="productOid">
+                <form id="foodForm">
+                    <input type="hidden" id="foodOid">
                     <div class="row g-4">
                         <div class="col-md-6">
-                            <label class="form-label fw-medium text-dark" style="font-size: 0.9rem;">Product Code *</label>
+                            <label class="form-label fw-medium text-dark" style="font-size: 0.9rem;">Code *</label>
                             <input type="text" class="form-control bg-white border" id="Code" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-medium text-dark" style="font-size: 0.9rem;">Product Name *</label>
+                            <label class="form-label fw-medium text-dark" style="font-size: 0.9rem;">Name *</label>
                             <input type="text" class="form-control bg-white border" id="Name" required>
                         </div>
                         
                         <div class="col-md-6">
-                            <label class="form-label fw-medium text-dark" style="font-size: 0.9rem;">Product Type</label>
+                            <label class="form-label fw-medium text-dark" style="font-size: 0.9rem;">Type</label>
                             <input type="text" class="form-control bg-white border" id="Type">
                         </div>
                         <div class="col-md-6">
@@ -113,7 +113,7 @@
                         <div class="col-12 mt-4 text-end">
                             <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancel</button>
                             <button type="submit" class="btn text-white fw-bold px-4 py-2" style="background-color: var(--theme-orange); border-radius: 8px;">
-                                Save Product
+                                Save Menu/Item
                             </button>
                         </div>
                     </div>
@@ -125,25 +125,24 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    const apiBase = '/api/products';
-    const tbody = document.getElementById('productsTableBody');
-    const form = document.getElementById('productForm');
-    const modal = new bootstrap.Modal(document.getElementById('createProductModal'));
+    const apiBase = '/api/foods';
+    const tbody = document.getElementById('foodsTableBody');
+    const form = document.getElementById('foodForm');
+    const modal = new bootstrap.Modal(document.getElementById('createFoodModal'));
     let currentMode = 'create';
 
-    // Fetch Products via API
-    function fetchProducts() {
+    function fetchFoods() {
         fetch(apiBase)
             .then(res => res.json())
             .then(res => {
-                const products = res.data;
+                const foods = res.data;
                 tbody.innerHTML = '';
-                if(products.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">No products found.</td></tr>';
+                if(foods.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">No menu items found.</td></tr>';
                     return;
                 }
                 
-                products.forEach(p => {
+                foods.forEach(p => {
                     const price = new Intl.NumberFormat('id-ID').format(p.Price || 0);
                     const buyPrice = new Intl.NumberFormat('id-ID').format(p.BuyPrice || 0);
                     const sellPrice = new Intl.NumberFormat('id-ID').format(p.SellPrice || 0);
@@ -179,7 +178,6 @@ document.addEventListener("DOMContentLoaded", function() {
             });
     }
 
-    // Submit form via API
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -194,7 +192,7 @@ document.addEventListener("DOMContentLoaded", function() {
             IsActive: document.getElementById('IsActive').value
         };
 
-        const oid = document.getElementById('productOid').value;
+        const oid = document.getElementById('foodOid').value;
         const method = currentMode === 'create' ? 'POST' : 'PUT';
         const url = currentMode === 'create' ? apiBase : `${apiBase}/${oid}`;
 
@@ -207,7 +205,7 @@ document.addEventListener("DOMContentLoaded", function() {
         .then(data => {
             if(data.status === 'success') {
                 modal.hide();
-                fetchProducts();
+                fetchFoods();
                 showAlert('success', data.message);
             } else {
                 showAlert('danger', 'Error saving data.');
@@ -215,15 +213,14 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 
-    // Delete and Edit Delegation
     tbody.addEventListener('click', function(e) {
         const btnDelete = e.target.closest('.btn-delete');
         if (btnDelete) {
-            if(confirm('Are you sure you want to delete this product?')) {
+            if(confirm('Are you sure you want to delete this menu/item?')) {
                 fetch(`${apiBase}/${btnDelete.dataset.id}`, { method: 'DELETE' })
                 .then(res => res.json())
                 .then(data => {
-                    fetchProducts();
+                    fetchFoods();
                     showAlert('success', data.message);
                 });
             }
@@ -236,8 +233,8 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(res => res.json())
             .then(res => {
                 const p = res.data;
-                document.getElementById('modalTitle').textContent = 'Edit Product';
-                document.getElementById('productOid').value = p.Oid;
+                document.getElementById('modalTitle').textContent = 'Edit Menu/Item';
+                document.getElementById('foodOid').value = p.Oid;
                 document.getElementById('Code').value = p.Code;
                 document.getElementById('Name').value = p.Name;
                 document.getElementById('Type').value = p.Type;
@@ -252,12 +249,11 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    // Reset form on open
-    document.querySelector('[data-bs-target="#createProductModal"]').addEventListener('click', () => {
+    document.querySelector('[data-bs-target="#createFoodModal"]').addEventListener('click', () => {
         currentMode = 'create';
-        document.getElementById('modalTitle').textContent = 'Add New Product';
+        document.getElementById('modalTitle').textContent = 'Add New Menu/Item';
         form.reset();
-        document.getElementById('productOid').value = '';
+        document.getElementById('foodOid').value = '';
     });
 
     function showAlert(type, message) {
@@ -269,8 +265,7 @@ document.addEventListener("DOMContentLoaded", function() {
         setTimeout(() => document.getElementById('alertContainer').innerHTML = '', 3000);
     }
 
-    // Initial Load
-    fetchProducts();
+    fetchFoods();
 });
 </script>
 
@@ -324,5 +319,4 @@ document.addEventListener("DOMContentLoaded", function() {
         color: #dc2626 !important;
     }
 </style>
-
 @endsection

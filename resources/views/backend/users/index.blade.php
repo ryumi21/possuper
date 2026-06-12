@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h3 class="mb-1 fw-bold text-dark" style="font-size: 1.5rem;">User Management</h3>
-            <p class="text-muted mb-0" style="font-size: 0.85rem;">Manage application users and roles</p>
+            <p class="text-muted mb-0" style="font-size: 0.85rem;">Manage application users and roles via API</p>
         </div>
         <div>
             <button type="button" data-bs-toggle="modal" data-bs-target="#createUserModal" class="btn btn-warning text-white fw-bold d-flex align-items-center px-3 py-2" style="font-size: 0.85rem; border-color: #e2e8f0; border-radius: 8px; background-color: var(--theme-orange); border: none;">
@@ -16,32 +16,7 @@
         </div>
     </div>
 
-    @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show" id="successAlert" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        <script>
-            setTimeout(function() {
-                var alertNode = document.getElementById('successAlert');
-                if (alertNode) {
-                    var bsAlert = new bootstrap.Alert(alertNode);
-                    bsAlert.close();
-                }
-            }, 2000);
-        </script>
-    @endif
-
-    @if ($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
-            <ul class="mb-0">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
+    <div id="alertContainer"></div>
 
     <div class="card" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: none;">
         <div class="card-body p-0">
@@ -55,8 +30,7 @@
             </div>
 
             <div class="table-responsive">
-                <!-- Using explicit full width borders a la reference -->
-                <table class="table align-middle mb-0 custom-table-grid">
+                <table class="table align-middle mb-0 custom-table-grid" id="usersTable">
                     <thead class="bg-white text-muted">
                         <tr style="font-size: 0.85rem;">
                             <!-- Adding a checkbox column like the image -->
@@ -70,117 +44,10 @@
                             <th class="text-center py-3 fw-medium">Action</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white">
-                        @forelse ($users as $user)
-                            <tr>
-                                <td class="text-center py-3">
-                                    <input class="form-check-input border-secondary" type="checkbox" style="opacity: 0.5;">
-                                </td>
-                                <td class="py-3">
-                                    <div class="d-flex align-items-center">
-                                        <div class="avatar-circle me-3 d-flex justify-content-center align-items-center text-white fw-bold shadow-sm" style="width: 36px; height: 36px; border-radius: 50%; font-size: 0.9rem; background: #64748b;">
-                                            {{ strtoupper(substr($user->Name, 0, 1)) }}
-                                        </div>
-                                        <div>
-                                            <h6 class="mb-0 fw-bold text-dark" style="font-size: 0.9rem;">{{ $user->Name }}</h6>
-                                            <small class="text-muted" style="font-size: 0.8rem;">ID: {{ $user->Oid ?? $user->oid ?? 'N/A' }}</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="py-3">
-                                    <span class="text-secondary fw-medium" style="font-size: 0.85rem;">
-                                         {{ $user->Code }}
-                                    </span>
-                                </td>
-                                <td class="py-3">
-                                    <!-- In the reference image, rating was stars, but here we keep Role as a clean text/badge -->
-                                    <span class="fw-medium text-dark" style="font-size: 0.85rem;">
-                                        {{ $user->role ? $user->role->Name : 'No Role' }}
-                                    </span>
-                                </td>
-                                <td class="py-3 ">
-                                    @if ($user->IsActive)
-                                        <span class="badge rounded-pill fw-medium px-2 py-1" style="background-color: #10b981; color: #fff; font-size: 0.70rem;">
-                                            Active
-                                        </span>
-                                    @else
-                                        <span class="badge rounded-pill fw-medium px-2 py-1" style="background-color: #ef4444; color: #fff; font-size: 0.70rem;">
-                                            Inactive
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="text-center py-3">
-                                    <div class="d-flex justify-content-center gap-2">
-                                        <button type="button" class="btn btn-sm btn-icon border hover-bg-light shadow-sm" data-bs-toggle="modal" data-bs-target="#editUserModal{{ $user->Oid ?? $user->oid ?? 0 }}" title="Edit" style="width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: white;">
-                                            <i class="bi bi-pencil" style="color: #64748b; font-size: 0.85rem;"></i>
-                                        </button>
-                                        <form action="{{ route('users.destroy', $user->Oid ?? $user->oid ?? 0) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this user?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-icon border hover-bg-light shadow-sm" data-bs-toggle="tooltip" title="Delete" style="width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: white;">
-                                                <i class="bi bi-trash" style="color: #ef4444; font-size: 0.85rem;"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-
-                            <!-- Edit User Modal specifically for this loop -->
-                            <div class="modal fade" id="editUserModal{{ $user->Oid ?? $user->oid ?? 0 }}" tabindex="-1" aria-labelledby="editUserModalLabel{{ $user->Oid ?? $user->oid ?? 0 }}" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content border-0 shadow" style="border-radius: 12px;">
-                                        <div class="modal-header border-0 pb-0">
-                                            <h5 class="modal-title fw-bold text-dark" id="editUserModalLabel{{ $user->Oid ?? $user->oid ?? 0 }}">Edit User</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body p-4">
-                                            <form action="{{ route('users.update', $user->Oid ?? $user->oid ?? 0) }}" method="POST">
-                                                @csrf
-                                                @method('PUT')
-                                                <div class="row g-4">
-                                                    <div class="col-md-6">
-                                                        <label class="form-label fw-medium text-dark" style="font-size: 0.9rem;">Code *</label>
-                                                        <input type="text" class="form-control bg-white border" name="Code" required value="{{ old('Code', $user->Code) }}">
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label fw-medium text-dark" style="font-size: 0.9rem;">Name *</label>
-                                                        <input type="text" class="form-control bg-white border" name="Name" required value="{{ old('Name', $user->Name) }}">
-                                                    </div>
-                                                    <div class="col-md-12">
-                                                        <label class="form-label fw-medium text-dark" style="font-size: 0.9rem;">Role *</label>
-                                                        <select class="form-select bg-white border" name="IsRole" required>
-                                                            <option value="">-- Select Role --</option>
-                                                            @foreach ($roles as $role)
-                                                                <option value="{{ $role->Oid }}" {{ old('IsRole', $user->IsRole) == $role->Oid ? 'selected' : '' }}>
-                                                                    {{ $role->Name }}
-                                                                </option>
-                                                            @endforeach
-                                                        </select>
-                                                    </div>
-                                                    <div class="col-md-12">
-                                                        <label class="form-label fw-medium text-dark" style="font-size: 0.9rem;">Status *</label>
-                                                        <select class="form-select bg-white border" name="IsActive" required>
-                                                            <option value="1" {{ old('IsActive', $user->IsActive) == '1' ? 'selected' : '' }}>Active</option>
-                                                            <option value="0" {{ old('IsActive', $user->IsActive) == '0' ? 'selected' : '' }}>Inactive</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="col-12 mt-4 text-end">
-                                                        <button type="button" class="btn btn-light border me-2" data-bs-dismiss="modal">Cancel</button>
-                                                        <button type="submit" class="btn text-white fw-bold px-4 py-2" style="background-color: var(--theme-orange); border-radius: 8px;">
-                                                            Update User
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="text-center py-4 text-muted">No users found.</td>
-                            </tr>
-                        @endforelse
+                    <tbody class="bg-white" id="usersTableBody">
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">Loading data from API...</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -213,44 +80,42 @@
     </div>
 </div>
 
-<!-- Create User Modal -->
-<div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+<!-- Create/Edit User Modal -->
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow" style="border-radius: 12px;">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold text-dark" id="createUserModalLabel">Add New User</h5>
+                <h5 class="modal-title fw-bold text-dark" id="modalTitle">Add New User</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <form action="{{ route('users.store') }}" method="POST">
-                    @csrf
+                <form id="userForm">
+                    <input type="hidden" id="userOid">
                     <div class="row g-4">
                         <div class="col-md-6">
                             <label for="Code" class="form-label fw-medium text-dark" style="font-size: 0.9rem;">Code *</label>
-                            <input type="text" class="form-control bg-white border" id="Code" name="Code" required value="{{ old('Code') }}">
+                            <input type="text" class="form-control bg-white border" id="Code" required>
                         </div>
                         <div class="col-md-6">
                             <label for="Name" class="form-label fw-medium text-dark" style="font-size: 0.9rem;">Name *</label>
-                            <input type="text" class="form-control bg-white border" id="Name" name="Name" required value="{{ old('Name') }}">
+                            <input type="text" class="form-control bg-white border" id="Name" required>
                         </div>
                         
                         <div class="col-md-12">
                             <label for="IsRole" class="form-label fw-medium text-dark" style="font-size: 0.9rem;">Role *</label>
-                            <select class="form-select bg-white border" id="IsRole" name="IsRole" required>
+                            <select class="form-select bg-white border" id="IsRole" required>
                                 <option value="">-- Select Role --</option>
                                 @foreach ($roles as $role)
-                                    <option value="{{ $role->Oid }}" {{ old('IsRole') == $role->Oid ? 'selected' : '' }}>
-                                        {{ $role->Name }}
-                                    </option>
+                                    <option value="{{ $role->Oid }}">{{ $role->Name }}</option>
                                 @endforeach
                             </select>
                         </div>
                         
                         <div class="col-md-12">
                             <label for="IsActive" class="form-label fw-medium text-dark" style="font-size: 0.9rem;">Status *</label>
-                            <select class="form-select bg-white border" id="IsActive" name="IsActive" required>
-                                <option value="1" {{ old('IsActive') == '1' ? 'selected' : '' }}>Active</option>
-                                <option value="0" {{ old('IsActive') == '0' ? 'selected' : '' }}>Inactive</option>
+                            <select class="form-select bg-white border" id="IsActive" required>
+                                <option value="1">Active</option>
+                                <option value="0">Inactive</option>
                             </select>
                         </div>
 
@@ -267,14 +132,175 @@
     </div>
 </div>
 
-@if($errors->any() && !old('_method'))
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        var createModal = new bootstrap.Modal(document.getElementById('createUserModal'));
-        createModal.show();
+document.addEventListener("DOMContentLoaded", function() {
+    const apiBase = '/api/users';
+    const tbody = document.getElementById('usersTableBody');
+    const form = document.getElementById('userForm');
+    const modal = new bootstrap.Modal(document.getElementById('createUserModal'));
+    let currentMode = 'create';
+
+    function fetchUsers() {
+        fetch(apiBase)
+            .then(res => res.json())
+            .then(res => {
+                const users = res.data;
+                tbody.innerHTML = '';
+                if(users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No users found.</td></tr>';
+                    return;
+                }
+                
+                users.forEach(u => {
+                    const statusHtml = u.IsActive ? 
+                        '<span class="badge rounded-pill fw-medium px-2 py-1" style="background-color: #10b981; color: #fff; font-size: 0.70rem;">Active</span>' : 
+                        '<span class="badge rounded-pill fw-medium px-2 py-1" style="background-color: #ef4444; color: #fff; font-size: 0.70rem;">Inactive</span>';
+                        
+                    const initial = u.Name ? u.Name.substring(0, 1).toUpperCase() : '?';
+                    const oid = u.Oid || u.oid || 0;
+                    const roleName = u.role ? u.role.Name : 'No Role';
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="text-center py-3">
+                            <input class="form-check-input border-secondary" type="checkbox" style="opacity: 0.5;">
+                        </td>
+                        <td class="py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle me-3 d-flex justify-content-center align-items-center text-white fw-bold shadow-sm" style="width: 36px; height: 36px; border-radius: 50%; font-size: 0.9rem; background: #64748b;">
+                                    ${initial}
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-dark" style="font-size: 0.9rem;">${u.Name}</h6>
+                                    <small class="text-muted" style="font-size: 0.8rem;">ID: ${oid}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3">
+                            <span class="text-secondary fw-medium" style="font-size: 0.85rem;">${u.Code}</span>
+                        </td>
+                        <td class="py-3">
+                            <span class="fw-medium text-dark" style="font-size: 0.85rem;">${roleName}</span>
+                        </td>
+                        <td class="py-3 ">
+                            ${statusHtml}
+                        </td>
+                        <td class="text-center py-3">
+                            <div class="d-flex justify-content-center gap-2">
+                                <button class="btn btn-sm btn-icon border hover-bg-light shadow-sm btn-reset" data-id="${oid}" title="Reset Password to 123" style="width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: white;">
+                                    <i class="bi bi-key" style="color: #f59e0b; font-size: 0.85rem;"></i>
+                                </button>
+                                <button class="btn btn-sm btn-icon border hover-bg-light shadow-sm btn-edit" data-id="${oid}" title="Edit" style="width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: white;">
+                                    <i class="bi bi-pencil" style="color: #64748b; font-size: 0.85rem;"></i>
+                                </button>
+                                <button class="btn btn-sm btn-icon border hover-bg-light shadow-sm btn-delete" data-id="${oid}" title="Delete" style="width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: white;">
+                                    <i class="bi bi-trash" style="color: #ef4444; font-size: 0.85rem;"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            });
+    }
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const payload = {
+            Code: document.getElementById('Code').value,
+            Name: document.getElementById('Name').value,
+            IsRole: document.getElementById('IsRole').value,
+            IsActive: document.getElementById('IsActive').value
+        };
+
+        const oid = document.getElementById('userOid').value;
+        const method = currentMode === 'create' ? 'POST' : 'PUT';
+        const url = currentMode === 'create' ? apiBase : `${apiBase}/${oid}`;
+
+        fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                modal.hide();
+                fetchUsers();
+                showAlert('success', data.message);
+            } else {
+                showAlert('danger', 'Error saving data.');
+            }
+        });
     });
+
+    tbody.addEventListener('click', function(e) {
+        const btnDelete = e.target.closest('.btn-delete');
+        if (btnDelete) {
+            if(confirm('Are you sure you want to delete this user?')) {
+                fetch(`${apiBase}/${btnDelete.dataset.id}`, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => {
+                    fetchUsers();
+                    showAlert('success', data.message);
+                });
+            }
+            return;
+        }
+
+        const btnReset = e.target.closest('.btn-reset');
+        if (btnReset) {
+            if(confirm('Are you sure you want to reset the password to 123 for this user?')) {
+                fetch(`${apiBase}/${btnReset.dataset.id}/reset-password`, { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    showAlert('success', data.message);
+                });
+            }
+            return;
+        }
+
+        const btnEdit = e.target.closest('.btn-edit');
+        if (btnEdit) {
+            fetch(`${apiBase}/${btnEdit.dataset.id}`)
+            .then(res => res.json())
+            .then(res => {
+                const u = res.data;
+                document.getElementById('modalTitle').textContent = 'Edit User';
+                document.getElementById('userOid').value = u.Oid;
+                document.getElementById('Code').value = u.Code;
+                document.getElementById('Name').value = u.Name;
+                document.getElementById('IsRole').value = u.IsRole;
+                document.getElementById('IsActive').value = u.IsActive;
+                currentMode = 'edit';
+                modal.show();
+            });
+        }
+    });
+
+    document.querySelector('[data-bs-target="#createUserModal"]').addEventListener('click', () => {
+        currentMode = 'create';
+        document.getElementById('modalTitle').textContent = 'Add New User';
+        form.reset();
+        document.getElementById('userOid').value = '';
+    });
+
+    function showAlert(type, message) {
+        const alertHtml = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>`;
+        document.getElementById('alertContainer').innerHTML = alertHtml;
+        setTimeout(() => document.getElementById('alertContainer').innerHTML = '', 3000);
+    }
+
+    fetchUsers();
+});
 </script>
-@endif
 
 <style>
     /* Styling to match reference image */

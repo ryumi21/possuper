@@ -111,8 +111,19 @@
                 </h6>
                 @foreach ($features as $menu)
                     <li class="nav-item mb-1">
-                        <a href="{{ $menu->Fitur === 'Produk & Kategori' ? route('products.index') : '#' }}"
-                            class="nav-link nav-link-custom {{ request()->routeIs('products.*') && $menu->Fitur === 'Produk & Kategori' ? 'active' : 'text-muted' }} d-flex align-items-center px-3 py-2 fw-medium">
+                        @php
+                            $routeUrl = '#';
+                            $isActive = false;
+                            if ($menu->Fitur === 'Produk & Kategori') {
+                                $routeUrl = route('products.index');
+                                $isActive = request()->routeIs('products.*');
+                            } elseif ($menu->Fitur === 'Menu & Item') {
+                                $routeUrl = route('foods.index');
+                                $isActive = request()->routeIs('foods.*');
+                            }
+                        @endphp
+                        <a href="{{ $routeUrl }}"
+                            class="nav-link nav-link-custom {{ $isActive ? 'active' : 'text-muted' }} d-flex align-items-center px-3 py-2 fw-medium">
                             <i class="bi {{ $iconMap[$menu->Fitur] ?? 'bi-circle' }} me-3 fs-6"></i>
                             {{ $menu->Fitur }}
                         </a>

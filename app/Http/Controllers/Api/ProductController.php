@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
@@ -9,13 +10,11 @@ class ProductController extends Controller
 {
     public function index()
     {
-        $products = Product::all();
-        return view('backend.products.index', compact('products'));
-    }
-
-    public function create()
-    {
-        return view('backend.products.create');
+        $products = Product::orderBy('Oid', 'desc')->get();
+        return response()->json([
+            'status' => 'success',
+            'data' => $products
+        ]);
     }
 
     public function store(Request $request)
@@ -25,19 +24,28 @@ class ProductController extends Controller
             'Name' => 'required|string|max:36',
             'Type' => 'nullable|string|max:36',
             'Price' => 'required|numeric',
+            'BuyPrice' => 'required|numeric',
+            'SellPrice' => 'required|numeric',
             'IsStock' => 'required|boolean',
             'IsActive' => 'required|boolean',
         ]);
 
-        Product::create($request->all());
+        $product = Product::create($request->all());
 
-        return redirect()->route('products.index')->with('success', 'Product created successfully.');
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Product created successfully.',
+            'data' => $product
+        ], 201);
     }
 
-    public function edit($id)
+    public function show($id)
     {
         $product = Product::findOrFail($id);
-        return view('backend.products.edit', compact('product'));
+        return response()->json([
+            'status' => 'success',
+            'data' => $product
+        ]);
     }
 
     public function update(Request $request, $id)
@@ -47,6 +55,8 @@ class ProductController extends Controller
             'Name' => 'required|string|max:36',
             'Type' => 'nullable|string|max:36',
             'Price' => 'required|numeric',
+            'BuyPrice' => 'required|numeric',
+            'SellPrice' => 'required|numeric',
             'IsStock' => 'required|boolean',
             'IsActive' => 'required|boolean',
         ]);
@@ -54,7 +64,11 @@ class ProductController extends Controller
         $product = Product::findOrFail($id);
         $product->update($request->all());
 
-        return redirect()->route('products.index')->with('success', 'Product updated successfully.');
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Product updated successfully.',
+            'data' => $product
+        ]);
     }
 
     public function destroy($id)
@@ -62,15 +76,9 @@ class ProductController extends Controller
         $product = Product::findOrFail($id);
         $product->delete();
 
-        return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
-    }
-
-    public function barcode($id)
-    {
-        $product = Product::findOrFail($id);
-        $generator = new \Picqer\Barcode\BarcodeGeneratorSVG();
-        $barcode = $generator->getBarcode($product->Code, $generator::TYPE_CODE_128);
-
-        return view('backend.products.barcode', compact('product', 'barcode'));
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Product deleted successfully.'
+        ]);
     }
 }

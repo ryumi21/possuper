@@ -50,7 +50,15 @@
                                 <td>
                                     @if($tx->Status == 1)
                                         <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2.5 py-1" style="font-size: 0.75rem;">
-                                            <i class="bi bi-check-circle-fill me-1"></i> Sukses / Lunas
+                                            <i class="bi bi-clock-history me-1"></i> Lunas (Antre Masak)
+                                        </span>
+                                    @elseif($tx->Status == 2)
+                                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2.5 py-1" style="font-size: 0.75rem;">
+                                            <i class="bi bi-send-fill me-1"></i> Sedang Diantar
+                                        </span>
+                                    @elseif($tx->Status == 3)
+                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2.5 py-1" style="font-size: 0.75rem;">
+                                            <i class="bi bi-check-circle-fill me-1"></i> Selesai / Diterima
                                         </span>
                                     @else
                                         <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2.5 py-1" style="font-size: 0.75rem;">
@@ -94,7 +102,15 @@
                                                     <span class="d-block">Waktu Order: {{ $tx->created_at->format('d/m/Y H:i:s') }}</span>
                                                 </div>
                                                 <div class="text-end">
-                                                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1">Lunas</span>
+                                                    @if($tx->Status == 1)
+                                                        <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2 py-1">Lunas (Antre Masak)</span>
+                                                    @elseif($tx->Status == 2)
+                                                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2 py-1">Sedang Diantar</span>
+                                                    @elseif($tx->Status == 3)
+                                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1">Selesai / Diterima</span>
+                                                    @else
+                                                        <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2 py-1">Status {{ $tx->Status }}</span>
+                                                    @endif
                                                 </div>
                                             </div>
 

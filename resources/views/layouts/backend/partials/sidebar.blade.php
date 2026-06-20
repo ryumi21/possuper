@@ -87,7 +87,10 @@
             <!-- Disaat nanti API Initial udah ada gunakan payload initial jangan ambil dari database IsPos Lagi -->
             @php
                 $userIsPos = auth()->check() ? auth()->user()->IsPos : 0;
-                $groupedMenus = \App\Models\Menu::where('IsPos', $userIsPos)->get()->groupBy('Category');
+                $groupedMenus = \App\Models\Menu::where('IsPos', $userIsPos)
+                    ->where('Is_Active', 1)
+                    ->get()
+                    ->groupBy('Category');
 
                 $iconMap = [
                     'Menu & Item' => 'bi-menu-button',
@@ -134,6 +137,9 @@
                             } elseif ($menu->Fitur === 'Bahan Baku & HPP') {
                                 $routeUrl = route('rawmaterials.index');
                                 $isActive = request()->routeIs('rawmaterials.*');
+                            } elseif ($menu->Fitur === 'Kitchen Display System') {
+                                $routeUrl = route('kitchen.index');
+                                $isActive = request()->routeIs('kitchen.*');
                             }
                         @endphp
                         <a href="{{ $routeUrl }}"

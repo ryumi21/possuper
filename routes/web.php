@@ -32,6 +32,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('itemunits', ItemUnitController::class)->only(['index']);
     Route::resource('rawmaterials', RawMaterialController::class)->only(['index']);
     Route::resource('transactions', \App\Http\Controllers\TransactionController::class)->only(['index', 'destroy']);
+    Route::get('/kitchen', [\App\Http\Controllers\KitchenController::class, 'index'])->name('kitchen.index');
+    Route::post('/kitchen/{id}/serve', [\App\Http\Controllers\KitchenController::class, 'serve'])->name('kitchen.serve');
+    Route::post('/kitchen/{id}/complete', [\App\Http\Controllers\KitchenController::class, 'complete'])->name('kitchen.complete');
     Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.resetPassword');
     Route::resource('users', UserController::class)->except(['create', 'edit']);
 

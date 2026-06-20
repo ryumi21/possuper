@@ -14,5 +14,6 @@ class Menu extends Model
         'Category',
         'Fitur',
         'IsPos',
+        'Is_Active',
     ];
 }

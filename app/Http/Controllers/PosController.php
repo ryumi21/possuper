@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Food;    
 use Illuminate\Http\Request;
 
 class PosController extends Controller
@@ -13,8 +14,13 @@ class PosController extends Controller
     }
 
     public function data(Request $request)
-    {
-        $query = Product::where('IsActive', 1);
+    {   $user = auth()->user();
+        if($user->IsPos == 1){
+            $query = Product::where('IsActive', 1);
+        }else{
+            $query = Food::where('IsActive', 1);
+        }
+        // dd($user->IsPos);
 
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;

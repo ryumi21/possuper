@@ -4,7 +4,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\FoodController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ItemUnitController;
+use App\Http\Controllers\RawMaterialController;
 
 // Route untuk Guest (Belum login)
 Route::middleware('guest')->group(function () {
@@ -26,6 +29,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/products/{product}/barcode', [ProductController::class, 'barcode'])->name('products.barcode');
     Route::resource('products', ProductController::class);
     Route::resource('foods', \App\Http\Controllers\FoodController::class);
+    Route::resource('itemunits', ItemUnitController::class)->only(['index']);
+    Route::resource('rawmaterials', RawMaterialController::class)->only(['index']);
+    Route::resource('transactions', \App\Http\Controllers\TransactionController::class)->only(['index', 'destroy']);
     Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.resetPassword');
     Route::resource('users', UserController::class)->except(['create', 'edit']);
 

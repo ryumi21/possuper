@@ -15,7 +15,18 @@ class Product extends Model
         'Name',
         'Type',
         'Price',
+        'BuyPrice',
+        'SellPrice',
         'IsStock',
         'IsActive',
     ];
+
+    /**
+     * Relationship to the ProductMaterial model
+     */
+    public function productMaterials()
+    {
+        return $this->hasMany(ProductMaterial::class, 'Product_Id', 'Oid');
+    }
 }
+

@@ -51,6 +51,13 @@
                 </a>
             </li>
             <li class="nav-item mb-1">
+                <a href="{{ route('transactions.index') }}"
+                    class="nav-link nav-link-custom {{ request()->routeIs('transactions.*') ? 'active' : 'text-muted' }} d-flex align-items-center px-3 py-2 fw-medium">
+                    <i class="bi bi-journal-text me-3 fs-6"></i>
+                    Log Transaksi
+                </a>
+            </li>
+            <li class="nav-item mb-1">
                 <a href="{{ route('users.index') }}"
                     class="nav-link nav-link-custom {{ request()->routeIs('users.*') ? 'active' : 'text-muted' }} d-flex align-items-center px-3 py-2 fw-medium">
                     <i class="bi bi-people me-3 fs-6"></i>
@@ -100,6 +107,7 @@
                     'Laporan Penjualan' => 'bi-file-earmark-bar-graph',
                     'Integrasi Aplikasi' => 'bi-link-45deg',
                     'Sinkronisasi Outlet' => 'bi-arrow-repeat',
+                    'Satuan Barang' => 'bi-box-seam',
                 ];
             @endphp
 
@@ -120,6 +128,12 @@
                             } elseif ($menu->Fitur === 'Menu & Item') {
                                 $routeUrl = route('foods.index');
                                 $isActive = request()->routeIs('foods.*');
+                            } elseif ($menu->Fitur === 'Satuan Barang') {
+                                $routeUrl = route('itemunits.index');
+                                $isActive = request()->routeIs('itemunits.*');
+                            } elseif ($menu->Fitur === 'Bahan Baku & HPP') {
+                                $routeUrl = route('rawmaterials.index');
+                                $isActive = request()->routeIs('rawmaterials.*');
                             }
                         @endphp
                         <a href="{{ $routeUrl }}"

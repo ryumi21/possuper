@@ -100,6 +100,12 @@
                     </div>
                 </div>
                 
+                <!-- Input Nomor Meja -->
+                <div class="bg-light border-bottom p-2 d-flex align-items-center gap-2 px-3">
+                    <span class="text-dark fw-bold small flex-shrink-0" style="font-size: 0.82rem;"><i class="bi bi-hash text-warning"></i> No. Meja:</span>
+                    <input type="text" id="tableNumberInput" class="form-control form-control-sm bg-white border" placeholder="Set Nomor Meja (opsional)..." style="border-radius: 8px; font-weight: 600; font-size: 0.8rem; height: 32px;">
+                </div>
+                
                 <!-- Cart items list scrollable -->
                 <div class="card-body overflow-auto p-3 bg-white" id="cartContainer" style="flex-grow: 1;">
                     <ul class="list-group list-group-flush" id="cartList">
@@ -278,6 +284,10 @@
                 <div class="d-flex justify-content-between">
                     <span>Metode:</span>
                     <span id="receiptMethod">Tunai</span>
+                </div>
+                <div class="d-flex justify-content-between" id="receiptTableNumberRow">
+                    <span>No. Meja:</span>
+                    <span id="receiptTableNumber">-</span>
                 </div>
             </div>
             
@@ -998,9 +1008,17 @@
         if(existingItem) {
             existingItem.qty += 1;
         } else {
-            cart.push({ id, name, price, qty: 1 });
+            cart.push({ id, name, price, qty: 1, note: '' });
         }
         renderCart();
+    }
+
+    // Mengubah catatan item keranjang
+    window.updateNote = function(id, note) {
+        let item = cart.find(i => i.id == id);
+        if(item) {
+            item.note = note;
+        }
     }
 
     // Mengubah Qty Produk dari Cart
@@ -1017,10 +1035,12 @@
 
     // Mengosongkan Cart Seluruhnya dengan Konfirmasi
     window.clearCartConfirm = function() {
-        if(cart.length > 0) {
+        const tableNumInput = document.getElementById('tableNumberInput');
+        if(cart.length > 0 || (tableNumInput && tableNumInput.value !== '')) {
             if(confirm('Yakin ingin membatalkan/mengosongkan semua pesanan?')) {
                 cart = [];
                 currentDiscount = 0;
+                if(tableNumInput) tableNumInput.value = '';
                 renderCart();
             }
         }
@@ -1030,6 +1050,8 @@
     window.clearCart = function() {
         cart = [];
         currentDiscount = 0;
+        const tableNumInput = document.getElementById('tableNumberInput');
+        if(tableNumInput) tableNumInput.value = '';
         renderCart();
     }
 
@@ -1082,6 +1104,14 @@
                                 <i class="bi bi-plus"></i>
                             </button>
                         </div>
+                    </div>
+                    <!-- Catatan Item -->
+                    <div class="mt-2 pt-2 border-top border-dashed-custom">
+                        <input type="text" class="form-control form-control-sm bg-white border text-muted" 
+                               placeholder="Tambahkan catatan (cth: Less Ice)..." 
+                               value="${item.note || ''}" 
+                               oninput="updateNote(${item.id}, this.value)"
+                               style="font-size: 0.75rem; border-radius: 6px; height: 28px; box-shadow: none;">
                     </div>
                 </li>
             `;
@@ -1230,24 +1260,68 @@
             return;
         }
         
-        // Sembunyikan Modal Pembayaran
-        if(paymentModalInstance) {
-            let modalElement = document.getElementById('paymentModal');
-            let modalObj = bootstrap.Modal.getInstance(modalElement);
-            if(modalObj) modalObj.hide();
-        }
+        const tableNumInput = document.getElementById('tableNumberInput');
+        const tableNo = tableNumInput ? tableNumInput.value.trim() : 'TBA';
         
-        // Populasikan Struk Cetak
-        renderReceipt(method, cash, change, finalTotal, total);
-        
-        // Tampilkan Modal Struk Sukses
-        successModalInstance = new bootstrap.Modal(document.getElementById('orderSuccessModal'));
-        successModalInstance.show();
-        
-        // Reset Keranjang
-        cart = [];
-        currentDiscount = 0;
-        renderCart();
+        // Prepare API payload
+        const payload = {
+            Table_No: tableNo,
+            Status: 1, // Status: 1 (Paid / Berhasil)
+            items: cart.map(item => ({
+                id: item.id,
+                qty: item.qty,
+                note: item.note || ''
+            }))
+        };
+
+        const btnConfirm = document.getElementById('btnConfirmPayment');
+        const originalText = btnConfirm.innerHTML;
+        btnConfirm.disabled = true;
+        btnConfirm.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+
+        fetch('/api/transactions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Sembunyikan Modal Pembayaran
+                if(paymentModalInstance) {
+                    let modalElement = document.getElementById('paymentModal');
+                    let modalObj = bootstrap.Modal.getInstance(modalElement);
+                    if(modalObj) modalObj.hide();
+                }
+                
+                // Populasikan Struk Cetak
+                renderReceipt(method, cash, change, finalTotal, total);
+                
+                // Tampilkan Modal Struk Sukses
+                successModalInstance = new bootstrap.Modal(document.getElementById('orderSuccessModal'));
+                successModalInstance.show();
+                
+                // Reset Keranjang
+                cart = [];
+                currentDiscount = 0;
+                if(tableNumInput) tableNumInput.value = '';
+                renderCart();
+            } else {
+                alert('Gagal menyimpan transaksi: ' + (data.message || 'Error'));
+            }
+        })
+        .catch(err => {
+            console.error('Checkout error:', err);
+            alert('Gagal menyimpan transaksi ke server.');
+        })
+        .finally(() => {
+            btnConfirm.disabled = false;
+            btnConfirm.innerHTML = originalText;
+        });
     }
 
     // Render receipt inside success modal
@@ -1259,6 +1333,18 @@
         // Metode
         document.getElementById('receiptMethod').innerText = method;
         
+        // No. Meja
+        const tableNumInput = document.getElementById('tableNumberInput');
+        const tableNum = tableNumInput ? tableNumInput.value.trim() : '';
+        const receiptTableNumber = document.getElementById('receiptTableNumber');
+        const receiptTableNumberRow = document.getElementById('receiptTableNumberRow');
+        if (tableNum && receiptTableNumberRow) {
+            receiptTableNumberRow.style.setProperty('display', 'flex', 'important');
+            receiptTableNumber.innerText = tableNum;
+        } else if (receiptTableNumberRow) {
+            receiptTableNumberRow.style.setProperty('display', 'none', 'important');
+        }
+        
         // Waktu
         let now = new Date();
         document.getElementById('receiptTime').innerText = now.toLocaleDateString('id-ID') + ' ' + now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
@@ -1269,10 +1355,14 @@
         
         cart.forEach(item => {
             let lineSubtotal = item.price * item.qty;
+            let noteHtml = item.note ? `<div class="text-muted small ps-2" style="font-size:0.72rem; margin-top:-2px; margin-bottom:4px;">* Catatan: ${item.note}</div>` : '';
             receiptItems.innerHTML += `
-                <div class="d-flex justify-content-between mb-1">
-                    <span>${item.name} (${item.qty}x)</span>
-                    <span>${formatRupiah(lineSubtotal)}</span>
+                <div class="mb-1">
+                    <div class="d-flex justify-content-between">
+                        <span>${item.name} (${item.qty}x)</span>
+                        <span>${formatRupiah(lineSubtotal)}</span>
+                    </div>
+                    ${noteHtml}
                 </div>
             `;
         });

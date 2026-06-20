@@ -9,8 +9,10 @@ class ProductController extends Controller
 {
     public function index()
     {
-        $products = Product::all();
-        return view('backend.products.index', compact('products'));
+        $products  = Product::with('productMaterials.unit')->get();
+        $materials = \App\Models\RawMaterial::where('status', 'active')->orderBy('Name', 'asc')->get();
+        $units     = \App\Models\ItemUnit::where('status', 'active')->orderBy('Name', 'asc')->get();
+        return view('backend.products.index', compact('products', 'materials', 'units'));
     }
 
     public function create()

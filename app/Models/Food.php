@@ -20,4 +20,12 @@ class Food extends Model
         'IsStock',
         'IsActive',
     ];
+
+    /**
+     * Relationship to the ProductMaterial model
+     */
+    public function productMaterials()
+    {
+        return $this->hasMany(ProductMaterial::class, 'Product_Id', 'Oid');
+    }
 }

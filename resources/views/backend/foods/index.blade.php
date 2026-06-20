@@ -27,6 +27,7 @@
                             <th class="ps-4">Code</th>
                             <th>Name</th>
                             <th>Type</th>
+                            <th>Bahan Baku</th>
                             <th>Price</th>
                             <th>Harga Modal / HPP</th>
                             <th>Sell Price</th>
@@ -37,7 +38,7 @@
                     </thead>
                     <tbody id="foodsTableBody">
                         <tr>
-                            <td colspan="9" class="text-center py-4 text-muted">Loading data from API...</td>
+                            <td colspan="10" class="text-center py-4 text-muted">Loading data from API...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -110,6 +111,43 @@
                             </select>
                         </div>
 
+                        <div class="col-12"><hr class="my-2 text-muted opacity-25"></div>
+                        
+                        <div class="col-12">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div>
+                                    <h6 class="fw-bold text-dark mb-0">
+                                        <i class="bi bi-layers me-2 text-warning"></i>Product Detail (Bahan Baku)
+                                    </h6>
+                                    <small class="text-muted">Tambahkan bahan baku yang digunakan untuk membuat produk ini</small>
+                                </div>
+                                <button type="button" id="addMaterialBtn"
+                                    class="btn btn-sm fw-semibold"
+                                    style="background-color: var(--theme-orange-bg); color: var(--theme-orange); border: 1px dashed var(--theme-orange); border-radius: 8px; font-size: 0.8rem;">
+                                    <i class="bi bi-plus-circle me-1"></i> Add Material
+                                </button>
+                            </div>
+
+                            {{-- Column headers (hidden until a row is added) --}}
+                            <div id="materialHeader" class="d-none">
+                                <div class="row gx-2 mb-1 px-1">
+                                    <div class="col-4">
+                                        <small class="text-muted fw-semibold text-uppercase" style="font-size:0.7rem; letter-spacing:0.5px;">Bahan Baku</small>
+                                    </div>
+                                    <div class="col-3">
+                                        <small class="text-muted fw-semibold text-uppercase" style="font-size:0.7rem; letter-spacing:0.5px;">Jumlah Bahan</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <small class="text-muted fw-semibold text-uppercase" style="font-size:0.7rem; letter-spacing:0.5px;">Item Unit</small>
+                                    </div>
+                                    <div class="col-1"></div>
+                                </div>
+                            </div>
+
+                            {{-- Dynamic rows --}}
+                            <div id="materialRows"></div>
+                        </div>
+
                         <div class="col-12 mt-4 text-end">
                             <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancel</button>
                             <button type="submit" class="btn text-white fw-bold px-4 py-2" style="background-color: var(--theme-orange); border-radius: 8px;">
@@ -123,6 +161,39 @@
     </div>
 </div>
 
+<template id="materialRowTemplate">
+    <div class="material-row row gx-2 mb-2 align-items-center">
+        <div class="col-4">
+            <select class="form-select form-select-sm bg-white border mat-name">
+                <option value="">-- Pilih Bahan --</option>
+                @foreach($materials as $m)
+                    <option value="{{ $m->Name }}">{{ $m->Name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-3">
+            <input type="number" class="form-control form-control-sm bg-white border mat-qty"
+                step="0.01" min="0" placeholder="0.00">
+        </div>
+        <div class="col-4">
+            <select class="form-select form-select-sm bg-white border mat-unit">
+                <option value="">-- Satuan --</option>
+                @foreach($units as $u)
+                    <option value="{{ $u->Oid }}">{{ $u->Name }} ({{ $u->Code }})</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-1 text-center">
+            <button type="button" class="remove-material-btn"
+                style="color:#ef4444; background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.15);
+                       border-radius:6px; width:28px; height:28px; padding:0;
+                       display:inline-flex; align-items:center; justify-content:center;">
+                <i class="bi bi-x" style="font-size:0.9rem;"></i>
+            </button>
+        </div>
+    </div>
+</template>
+
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const apiBase = '/api/foods';
@@ -131,6 +202,51 @@ document.addEventListener("DOMContentLoaded", function() {
     const modal = new bootstrap.Modal(document.getElementById('createFoodModal'));
     let currentMode = 'create';
 
+    // ===================== MATERIAL ROWS =====================
+    const addMaterialBtn = document.getElementById('addMaterialBtn');
+    const materialRows   = document.getElementById('materialRows');
+    const materialHeader = document.getElementById('materialHeader');
+    const rowTemplate    = document.getElementById('materialRowTemplate');
+
+    function addMaterialRow(name = '', qty = '', unitId = '') {
+        materialHeader.classList.remove('d-none');
+
+        const clone = rowTemplate.content.cloneNode(true);
+        const row   = clone.querySelector('.material-row');
+
+        if (name)   row.querySelector('.mat-name').value = name;
+        if (qty)    row.querySelector('.mat-qty').value  = qty;
+        if (unitId) row.querySelector('.mat-unit').value = String(unitId);
+
+        row.querySelector('.remove-material-btn').addEventListener('click', () => {
+            row.remove();
+            if (materialRows.children.length === 0) {
+                materialHeader.classList.add('d-none');
+            }
+        });
+
+        materialRows.appendChild(row);
+    }
+
+    addMaterialBtn.addEventListener('click', () => addMaterialRow());
+
+    function clearMaterialRows() {
+        materialRows.innerHTML = '';
+        materialHeader.classList.add('d-none');
+    }
+
+    function getMaterialsPayload() {
+        const result = [];
+        materialRows.querySelectorAll('.material-row').forEach(row => {
+            const name   = row.querySelector('.mat-name').value;
+            const qty    = row.querySelector('.mat-qty').value;
+            const unitId = row.querySelector('.mat-unit').value;
+            if (name) result.push({ name, qty: qty || 0, unit_id: unitId || null });
+        });
+        return result;
+    }
+
+    // ===================== FETCH & RENDER TABLE =====================
     function fetchFoods() {
         fetch(apiBase)
             .then(res => res.json())
@@ -138,7 +254,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 const foods = res.data;
                 tbody.innerHTML = '';
                 if(foods.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">No menu items found.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-muted">No menu items found.</td></tr>';
                     return;
                 }
                 
@@ -146,6 +262,20 @@ document.addEventListener("DOMContentLoaded", function() {
                     const price = new Intl.NumberFormat('id-ID').format(p.Price || 0);
                     const buyPrice = new Intl.NumberFormat('id-ID').format(p.BuyPrice || 0);
                     const sellPrice = new Intl.NumberFormat('id-ID').format(p.SellPrice || 0);
+                    
+                    // Material badges
+                    let materialBadges = '-';
+                    if (p.product_materials && p.product_materials.length > 0) {
+                        materialBadges = p.product_materials.map(m => {
+                            const unitLabel = m.unit
+                                ? `<span class="text-muted" style="font-size:0.7rem;"> (${m.unit.Code})</span>`
+                                : '';
+                            return `<span class="badge bg-light border text-dark fw-medium me-1 mb-1"
+                                        style="font-size:0.72rem; padding:3px 7px; border-radius:5px;">
+                                        ${m.Name} × ${m.Create_Cost}${unitLabel}
+                                    </span>`;
+                        }).join('');
+                    }
                     
                     const stockHtml = p.IsStock ? 
                         '<span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1"><i class="bi bi-check-circle me-1"></i> In Stock</span>' : 
@@ -161,6 +291,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         <td class="ps-4 fw-medium text-dark">${p.Code}</td>
                         <td class="text-muted">${p.Name}</td>
                         <td><span class="badge bg-light text-secondary fw-semibold" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">${p.Type || '-'}</span></td>
+                        <td style="max-width:200px;">${materialBadges}</td>
                         <td class="fw-bold text-dark">Rp ${price}</td>
                         <td class="fw-bold text-dark">Rp ${buyPrice}</td>
                         <td class="fw-bold text-dark">Rp ${sellPrice}</td>
@@ -178,6 +309,7 @@ document.addEventListener("DOMContentLoaded", function() {
             });
     }
 
+    // ===================== FORM SUBMIT =====================
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -189,7 +321,8 @@ document.addEventListener("DOMContentLoaded", function() {
             BuyPrice: document.getElementById('BuyPrice').value,
             SellPrice: document.getElementById('SellPrice').value,
             IsStock: document.getElementById('IsStock').value,
-            IsActive: document.getElementById('IsActive').value
+            IsActive: document.getElementById('IsActive').value,
+            materials: getMaterialsPayload()
         };
 
         const oid = document.getElementById('foodOid').value;
@@ -208,11 +341,13 @@ document.addEventListener("DOMContentLoaded", function() {
                 fetchFoods();
                 showAlert('success', data.message);
             } else {
-                showAlert('danger', 'Error saving data.');
+                showAlert('danger', data.message || 'Error saving data.');
             }
-        });
+        })
+        .catch(() => showAlert('danger', 'Server error occurred.'));
     });
 
+    // ===================== DELETE & EDIT =====================
     tbody.addEventListener('click', function(e) {
         const btnDelete = e.target.closest('.btn-delete');
         if (btnDelete) {
@@ -237,23 +372,32 @@ document.addEventListener("DOMContentLoaded", function() {
                 document.getElementById('foodOid').value = p.Oid;
                 document.getElementById('Code').value = p.Code;
                 document.getElementById('Name').value = p.Name;
-                document.getElementById('Type').value = p.Type;
+                document.getElementById('Type').value = p.Type || '';
                 document.getElementById('Price').value = p.Price;
                 document.getElementById('BuyPrice').value = p.BuyPrice;
                 document.getElementById('SellPrice').value = p.SellPrice;
                 document.getElementById('IsStock').value = p.IsStock;
                 document.getElementById('IsActive').value = p.IsActive;
+                
+                // Load existing material rows
+                clearMaterialRows();
+                if (p.product_materials && p.product_materials.length > 0) {
+                    p.product_materials.forEach(m => addMaterialRow(m.Name, m.Create_Cost, m.ItemUnit));
+                }
+
                 currentMode = 'edit';
                 modal.show();
             });
         }
     });
 
+    // ===================== RESET ON ADD =====================
     document.querySelector('[data-bs-target="#createFoodModal"]').addEventListener('click', () => {
         currentMode = 'create';
         document.getElementById('modalTitle').textContent = 'Add New Menu/Item';
         form.reset();
         document.getElementById('foodOid').value = '';
+        clearMaterialRows();
     });
 
     function showAlert(type, message) {
@@ -317,6 +461,17 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     .premium-btn-icon.delete-btn:hover i {
         color: #dc2626 !important;
+    }
+
+    /* Material row entry animation */
+    .material-row { animation: slideInRow 0.18s ease-out; }
+    @keyframes slideInRow {
+        from { opacity: 0; transform: translateY(-6px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .remove-material-btn:hover {
+        background: rgba(239,68,68,0.12) !important;
+        border-color: rgba(239,68,68,0.3) !important;
     }
 </style>
 @endsection

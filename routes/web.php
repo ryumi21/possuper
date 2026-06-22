@@ -37,6 +37,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/kitchen/{id}/complete', [\App\Http\Controllers\KitchenController::class, 'complete'])->name('kitchen.complete');
     Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.resetPassword');
     Route::resource('users', UserController::class)->except(['create', 'edit']);
+    Route::get('/rolepermissions', [\App\Http\Controllers\RolePermissionController::class, 'index'])->name('rolepermissions.index');
+    Route::resource('roles', \App\Http\Controllers\RoleController::class)->only(['index']);
 
     // Config API (Called on every module)
     Route::get('/api/config', [\App\Http\Controllers\Api\ConfigController::class, 'index']);

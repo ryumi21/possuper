@@ -30,13 +30,14 @@
                             <th>Current Stock</th>
                             <th>Min Stock</th>
                             <th>Purchase Price</th>
+                            <th>Harga Satuan</th>
                             <th>Status</th>
                             <th class="text-end pe-4">Action</th>
                         </tr>
                     </thead>
                     <tbody id="materialsTableBody">
                         <tr>
-                            <td colspan="8" class="text-center py-4 text-muted">Loading data from API...</td>
+                            <td colspan="9" class="text-center py-4 text-muted">Loading data from API...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -80,6 +81,13 @@
                             <div class="input-group">
                                 <span class="input-group-text bg-white border text-muted">Rp</span>
                                 <input type="number" class="form-control bg-white border" id="purchase_price" step="1" placeholder="e.g. 15000">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium text-dark" style="font-size: 0.9rem;">Harga Satuan</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border text-muted">Rp</span>
+                                <input type="number" class="form-control bg-white border" id="unit_price" step="1" placeholder="e.g. 1500">
                             </div>
                         </div>
 
@@ -129,7 +137,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 const materials = res.data;
                 tbody.innerHTML = '';
                 if(materials.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">No raw materials found.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">No raw materials found.</td></tr>';
                     return;
                 }
                 
@@ -138,6 +146,9 @@ document.addEventListener("DOMContentLoaded", function() {
                     const unitName = p.item_unit ? `${p.item_unit.Name} (${p.item_unit.Code})` : `-`;
                     const currentStock = parseFloat(p.current_stock || 0).toFixed(2);
                     const minStock = parseFloat(p.minimum_stock || 0).toFixed(2);
+
+                    const unitPriceVal = parseFloat(p.unit_price || 0);
+                    const unitPrice = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(unitPriceVal);
 
                     const statusHtml = p.status === 'active' ? 
                         '<span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1">Active</span>' : 
@@ -158,6 +169,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         <td>${stockBadge}</td>
                         <td class="text-muted">${minStock}</td>
                         <td class="fw-bold text-dark">Rp ${price}</td>
+                        <td class="fw-semibold text-dark">Rp ${unitPrice}</td>
                         <td>${statusHtml}</td>
                         <td class="text-end pe-4">
                             <div class="d-flex justify-content-end gap-2">
@@ -171,7 +183,7 @@ document.addEventListener("DOMContentLoaded", function() {
             })
             .catch(err => {
                 console.error(err);
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-danger">Failed to fetch data from server.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-danger">Failed to fetch data from server.</td></tr>';
             });
     }
 
@@ -184,6 +196,7 @@ document.addEventListener("DOMContentLoaded", function() {
             Category: document.getElementById('Category').value,
             unit: document.getElementById('unit').value,
             purchase_price: document.getElementById('purchase_price').value || 0,
+            unit_price: document.getElementById('unit_price').value || 0,
             current_stock: document.getElementById('current_stock').value || 0,
             minimum_stock: document.getElementById('minimum_stock').value || 0,
             status: document.getElementById('status').value
@@ -245,6 +258,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 document.getElementById('Category').value = p.Category || '';
                 document.getElementById('unit').value = p.unit;
                 document.getElementById('purchase_price').value = p.purchase_price;
+                document.getElementById('unit_price').value = p.unit_price || 0;
                 document.getElementById('current_stock').value = p.current_stock;
                 document.getElementById('minimum_stock').value = p.minimum_stock;
                 document.getElementById('status').value = p.status || 'active';

@@ -16,6 +16,11 @@ class User extends Authenticatable
         'Password',
         'IsRole',
         'IsActive',
+        'allowed_menus',
+    ];
+
+    protected $casts = [
+        'allowed_menus' => 'array',
     ];
 
     public function role()

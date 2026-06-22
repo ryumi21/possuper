@@ -64,6 +64,20 @@
                     Users
                 </a>
             </li>
+            <li class="nav-item mb-1">
+                <a href="{{ route('rolepermissions.index') }}"
+                    class="nav-link nav-link-custom {{ request()->routeIs('rolepermissions.*') ? 'active' : 'text-muted' }} d-flex align-items-center px-3 py-2 fw-medium">
+                    <i class="bi bi-shield-lock me-3 fs-6"></i>
+                    Role Permission
+                </a>
+            </li>
+            <li class="nav-item mb-1">
+                <a href="{{ route('roles.index') }}"
+                    class="nav-link nav-link-custom {{ request()->routeIs('roles.*') ? 'active' : 'text-muted' }} d-flex align-items-center px-3 py-2 fw-medium">
+                    <i class="bi bi-shield me-3 fs-6"></i>
+                    Roles
+                </a>
+            </li>
             <!-- <li class="nav-item mb-1">
                 <a href="#"
                     class="nav-link nav-link-custom text-muted d-flex align-items-center justify-content-between px-3 py-2 fw-medium">
@@ -86,11 +100,25 @@
             </li> -->
             <!-- Disaat nanti API Initial udah ada gunakan payload initial jangan ambil dari database IsPos Lagi -->
             @php
-                $userIsPos = auth()->check() ? auth()->user()->IsPos : 0;
-                $groupedMenus = \App\Models\Menu::where('IsPos', $userIsPos)
-                    ->where('Is_Active', 1)
-                    ->get()
-                    ->groupBy('Category');
+                $user = auth()->user();
+                
+                if ($user && $user->IsRole == 1) {
+                    // SuperAdmin (IsRole = 1) gets access to all active menus
+                    $groupedMenus = \App\Models\Menu::where('Is_Active', 1)
+                        ->get()
+                        ->groupBy('Category');
+                } else {
+                    $allowedMenus = $user ? $user->allowed_menus : null;
+                    if (is_array($allowedMenus)) {
+                        $groupedMenus = \App\Models\Menu::where('Is_Active', 1)
+                            ->whereIn('Oid', $allowedMenus)
+                            ->get()
+                            ->groupBy('Category');
+                    } else {
+                        // Empty access if not set
+                        $groupedMenus = collect();
+                    }
+                }
 
                 $iconMap = [
                     'Menu & Item' => 'bi-menu-button',

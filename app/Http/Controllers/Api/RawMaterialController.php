@@ -26,6 +26,7 @@ class RawMaterialController extends Controller
             'current_stock' => 'nullable|numeric|min:0',
             'minimum_stock' => 'nullable|numeric|min:0',
             'purchase_price' => 'nullable|numeric|min:0',
+            'unit_price' => 'nullable|numeric|min:0',
             'status' => 'nullable|string|max:50',
         ]);
 
@@ -56,6 +57,7 @@ class RawMaterialController extends Controller
             'current_stock' => 'nullable|numeric|min:0',
             'minimum_stock' => 'nullable|numeric|min:0',
             'purchase_price' => 'nullable|numeric|min:0',
+            'unit_price' => 'nullable|numeric|min:0',
             'status' => 'nullable|string|max:50',
         ]);
 

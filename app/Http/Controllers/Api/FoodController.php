@@ -19,9 +19,34 @@ class FoodController extends Controller
 
     public function store(Request $request)
     {
+        if ($request->has('materials_json')) {
+            $request->merge(['materials' => json_decode($request->input('materials_json'), true)]);
+        }
+
+        // Calculate BuyPrice from materials if present
+        $materials = $request->input('materials', []);
+        if (is_array($materials) && count($materials) > 0) {
+            $buyPrice = 0;
+            foreach ($materials as $m) {
+                if (!empty($m['name'])) {
+                    $rawMat = \App\Models\RawMaterial::where('Name', $m['name'])->first();
+                    if ($rawMat) {
+                        $buyPrice += ($m['qty'] ?? 0) * ($rawMat->unit_price ?? 0);
+                    }
+                }
+            }
+            $request->merge(['BuyPrice' => $buyPrice]);
+        }
+
+        if ($request->hasFile('image_file')) {
+            $path = $request->file('image_file')->store('foods', 'public');
+            $request->merge(['image' => $path]);
+        }
+
         $request->validate([
             'Code'      => 'required|string|max:36',
             'Name'      => 'required|string|max:36',
+            'image'     => 'nullable|string|max:255',
             'Type'      => 'nullable|string|max:36',
             'Price'     => 'required|numeric',
             'BuyPrice'  => 'required|numeric',
@@ -35,7 +60,7 @@ class FoodController extends Controller
         ]);
 
         $food = Food::create($request->only([
-            'Code', 'Name', 'Type', 'Price', 'BuyPrice', 'SellPrice', 'IsStock', 'IsActive'
+            'Code', 'Name', 'image', 'Type', 'Price', 'BuyPrice', 'SellPrice', 'IsStock', 'IsActive'
         ]));
 
         foreach ($request->input('materials', []) as $m) {
@@ -66,9 +91,34 @@ class FoodController extends Controller
 
     public function update(Request $request, $id)
     {
+        if ($request->has('materials_json')) {
+            $request->merge(['materials' => json_decode($request->input('materials_json'), true)]);
+        }
+
+        // Calculate BuyPrice from materials if present
+        $materials = $request->input('materials', []);
+        if (is_array($materials) && count($materials) > 0) {
+            $buyPrice = 0;
+            foreach ($materials as $m) {
+                if (!empty($m['name'])) {
+                    $rawMat = \App\Models\RawMaterial::where('Name', $m['name'])->first();
+                    if ($rawMat) {
+                        $buyPrice += ($m['qty'] ?? 0) * ($rawMat->unit_price ?? 0);
+                    }
+                }
+            }
+            $request->merge(['BuyPrice' => $buyPrice]);
+        }
+
+        if ($request->hasFile('image_file')) {
+            $path = $request->file('image_file')->store('foods', 'public');
+            $request->merge(['image' => $path]);
+        }
+
         $request->validate([
             'Code'      => 'required|string|max:36',
             'Name'      => 'required|string|max:36',
+            'image'     => 'nullable|string|max:255',
             'Type'      => 'nullable|string|max:36',
             'Price'     => 'required|numeric',
             'BuyPrice'  => 'required|numeric',
@@ -83,7 +133,7 @@ class FoodController extends Controller
 
         $food = Food::findOrFail($id);
         $food->update($request->only([
-            'Code', 'Name', 'Type', 'Price', 'BuyPrice', 'SellPrice', 'IsStock', 'IsActive'
+            'Code', 'Name', 'image', 'Type', 'Price', 'BuyPrice', 'SellPrice', 'IsStock', 'IsActive'
         ]));
 
         // Delete old and re-insert

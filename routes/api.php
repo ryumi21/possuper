@@ -15,4 +15,8 @@ Route::name('api.')->group(function () {
     Route::apiResource('rawmaterials', \App\Http\Controllers\Api\RawMaterialController::class);
     Route::apiResource('transactions', \App\Http\Controllers\Api\TransactionController::class);
     Route::post('users/{user}/reset-password', [\App\Http\Controllers\Api\UserController::class, 'resetPassword']);
+    Route::get('rolepermissions', [\App\Http\Controllers\Api\RolePermissionController::class, 'index']);
+    Route::get('rolepermissions/{userId}', [\App\Http\Controllers\Api\RolePermissionController::class, 'show']);
+    Route::put('rolepermissions/{userId}', [\App\Http\Controllers\Api\RolePermissionController::class, 'update']);
+    Route::apiResource('roles', \App\Http\Controllers\Api\RoleController::class);
 });

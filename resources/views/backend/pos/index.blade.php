@@ -795,10 +795,13 @@
                                             </span>
                                             <small class="text-muted" style="font-size: 0.7rem;">${p.Code}</small>
                                         </div>
-                                        <div class="mb-3 mt-1">
-                                            <div class="bg-theme-orange-bg rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                                <i class="bi bi-box text-theme-orange fs-4"></i>
-                                            </div>
+                                        <div class="mb-3 mt-1 d-flex justify-content-center">
+                                            ${p.image ? 
+                                                `<img src="/storage/${p.image}" class="rounded object-fit-cover shadow-sm" style="width: 64px; height: 64px; border: 1px solid #e2e8f0;" alt="${cleanName}">` :
+                                                `<div class="bg-theme-orange-bg rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                    <i class="bi bi-box text-theme-orange fs-4"></i>
+                                                 </div>`
+                                            }
                                         </div>
                                         <h6 class="card-title fw-bold text-dark mb-2 lh-sm" style="font-size: 0.88rem;">${p.Name}</h6>
                                         <span class="badge w-100 bg-white border border-success text-success fw-bold p-2 fs-6 mt-auto">Rp ${priceDisp}</span>

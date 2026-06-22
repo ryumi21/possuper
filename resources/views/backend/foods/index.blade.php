@@ -97,6 +97,14 @@
                         </div>
 
                         <div class="col-md-6">
+                            <label class="form-label fw-medium text-dark" style="font-size: 0.9rem;">Gambar (Image)</label>
+                            <input type="file" class="form-control bg-white border" id="ImageFile" accept="image/*">
+                            <div id="imagePreviewContainer" class="mt-2 d-none">
+                                <img id="imagePreview" src="" class="rounded object-fit-cover shadow-sm animate__animated animate__fadeIn" style="width: 80px; height: 80px; border: 1px solid #e2e8f0;">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
                             <label class="form-label fw-medium text-dark" style="font-size: 0.9rem;">Stock Status *</label>
                             <select class="form-select bg-white border" id="IsStock" required>
                                 <option value="1">In Stock</option>
@@ -167,7 +175,7 @@
             <select class="form-select form-select-sm bg-white border mat-name">
                 <option value="">-- Pilih Bahan --</option>
                 @foreach($materials as $m)
-                    <option value="{{ $m->Name }}">{{ $m->Name }}</option>
+                    <option value="{{ $m->Name }}" data-unit-price="{{ $m->unit_price ?? 0 }}">{{ $m->Name }}</option>
                 @endforeach
             </select>
         </div>
@@ -208,6 +216,31 @@ document.addEventListener("DOMContentLoaded", function() {
     const materialHeader = document.getElementById('materialHeader');
     const rowTemplate    = document.getElementById('materialRowTemplate');
 
+    function calculateTotalHPP() {
+        const rows = materialRows.querySelectorAll('.material-row');
+        const buyPriceInput = document.getElementById('BuyPrice');
+        
+        if (rows.length === 0) {
+            buyPriceInput.removeAttribute('readonly');
+            return;
+        }
+
+        let totalHpp = 0;
+        rows.forEach(row => {
+            const selectEl = row.querySelector('.mat-name');
+            const qtyEl = row.querySelector('.mat-qty');
+            
+            const selectedOpt = selectEl.options[selectEl.selectedIndex];
+            const unitPrice = selectedOpt ? parseFloat(selectedOpt.getAttribute('data-unit-price') || 0) : 0;
+            const qty = parseFloat(qtyEl.value || 0);
+            
+            totalHpp += qty * unitPrice;
+        });
+
+        buyPriceInput.value = Math.round(totalHpp);
+        buyPriceInput.setAttribute('readonly', 'readonly');
+    }
+
     function addMaterialRow(name = '', qty = '', unitId = '') {
         materialHeader.classList.remove('d-none');
 
@@ -218,14 +251,20 @@ document.addEventListener("DOMContentLoaded", function() {
         if (qty)    row.querySelector('.mat-qty').value  = qty;
         if (unitId) row.querySelector('.mat-unit').value = String(unitId);
 
+        row.querySelector('.mat-name').addEventListener('change', calculateTotalHPP);
+        row.querySelector('.mat-qty').addEventListener('input', calculateTotalHPP);
+        row.querySelector('.mat-qty').addEventListener('change', calculateTotalHPP);
+
         row.querySelector('.remove-material-btn').addEventListener('click', () => {
             row.remove();
             if (materialRows.children.length === 0) {
                 materialHeader.classList.add('d-none');
             }
+            calculateTotalHPP();
         });
 
         materialRows.appendChild(row);
+        calculateTotalHPP();
     }
 
     addMaterialBtn.addEventListener('click', () => addMaterialRow());
@@ -233,6 +272,7 @@ document.addEventListener("DOMContentLoaded", function() {
     function clearMaterialRows() {
         materialRows.innerHTML = '';
         materialHeader.classList.add('d-none');
+        calculateTotalHPP();
     }
 
     function getMaterialsPayload() {
@@ -289,7 +329,17 @@ document.addEventListener("DOMContentLoaded", function() {
                     row.style.fontSize = '0.9rem';
                     row.innerHTML = `
                         <td class="ps-4 fw-medium text-dark">${p.Code}</td>
-                        <td class="text-muted">${p.Name}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                ${p.image ? 
+                                    `<img src="/storage/${p.image}" class="rounded object-fit-cover shadow-sm border" style="width: 38px; height: 38px; border-color: #f1f5f9;" alt="${p.Name}">` : 
+                                    `<div class="bg-light rounded d-flex align-items-center justify-content-center border" style="width: 38px; height: 38px; border-color: #f1f5f9;">
+                                        <i class="bi bi-image text-muted" style="font-size: 1.1rem;"></i>
+                                     </div>`
+                                }
+                                <span class="fw-semibold text-dark">${p.Name}</span>
+                            </div>
+                        </td>
                         <td><span class="badge bg-light text-secondary fw-semibold" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">${p.Type || '-'}</span></td>
                         <td style="max-width:200px;">${materialBadges}</td>
                         <td class="fw-bold text-dark">Rp ${price}</td>
@@ -313,26 +363,32 @@ document.addEventListener("DOMContentLoaded", function() {
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         
-        const payload = {
-            Code: document.getElementById('Code').value,
-            Name: document.getElementById('Name').value,
-            Type: document.getElementById('Type').value,
-            Price: document.getElementById('Price').value,
-            BuyPrice: document.getElementById('BuyPrice').value,
-            SellPrice: document.getElementById('SellPrice').value,
-            IsStock: document.getElementById('IsStock').value,
-            IsActive: document.getElementById('IsActive').value,
-            materials: getMaterialsPayload()
-        };
+        const formData = new FormData();
+        formData.append('Code', document.getElementById('Code').value);
+        formData.append('Name', document.getElementById('Name').value);
+        formData.append('Type', document.getElementById('Type').value);
+        formData.append('Price', document.getElementById('Price').value);
+        formData.append('BuyPrice', document.getElementById('BuyPrice').value);
+        formData.append('SellPrice', document.getElementById('SellPrice').value);
+        formData.append('IsStock', document.getElementById('IsStock').value);
+        formData.append('IsActive', document.getElementById('IsActive').value);
+        formData.append('materials_json', JSON.stringify(getMaterialsPayload()));
+
+        const imageFile = document.getElementById('ImageFile').files[0];
+        if (imageFile) {
+            formData.append('image_file', imageFile);
+        }
 
         const oid = document.getElementById('foodOid').value;
-        const method = currentMode === 'create' ? 'POST' : 'PUT';
+        if (currentMode === 'edit') {
+            formData.append('_method', 'PUT');
+        }
         const url = currentMode === 'create' ? apiBase : `${apiBase}/${oid}`;
 
         fetch(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify(payload)
+            method: 'POST',
+            headers: { 'Accept': 'application/json' },
+            body: formData
         })
         .then(res => res.json())
         .then(data => {
@@ -378,6 +434,17 @@ document.addEventListener("DOMContentLoaded", function() {
                 document.getElementById('SellPrice').value = p.SellPrice;
                 document.getElementById('IsStock').value = p.IsStock;
                 document.getElementById('IsActive').value = p.IsActive;
+
+                // Load image preview
+                document.getElementById('ImageFile').value = '';
+                const previewContainer = document.getElementById('imagePreviewContainer');
+                const previewImg = document.getElementById('imagePreview');
+                if (p.image) {
+                    previewImg.src = `/storage/${p.image}`;
+                    previewContainer.classList.remove('d-none');
+                } else {
+                    previewContainer.classList.add('d-none');
+                }
                 
                 // Load existing material rows
                 clearMaterialRows();
@@ -397,6 +464,8 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('modalTitle').textContent = 'Add New Menu/Item';
         form.reset();
         document.getElementById('foodOid').value = '';
+        document.getElementById('ImageFile').value = '';
+        document.getElementById('imagePreviewContainer').classList.add('d-none');
         clearMaterialRows();
     });
 

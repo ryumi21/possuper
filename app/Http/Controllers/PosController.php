@@ -8,13 +8,25 @@ use Illuminate\Http\Request;
 
 class PosController extends Controller
 {
+    private function checkPermission()
+    {
+        $user = auth()->user();
+        $posMenu = \App\Models\Menu::where('Fitur', 'Mesin Kasir (POS)')->where('IsPos', $user->IsPos)->first();
+        if (!$user || ($user->IsRole != 1 && (!$posMenu || !is_array($user->allowed_menus) || !in_array($posMenu->Oid, $user->allowed_menus)))) {
+            abort(403, 'Unauthorized action.');
+        }
+    }
+
     public function index()
     {
+        $this->checkPermission();
         return view('backend.pos.index');
     }
 
     public function data(Request $request)
-    {   $user = auth()->user();
+    {
+        $this->checkPermission();
+        $user = auth()->user();
         if($user->IsPos == 1){
             $query = Product::where('IsActive', 1);
         }else{

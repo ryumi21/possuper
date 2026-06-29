@@ -74,7 +74,7 @@
                 console.error("Error serving order:", err);
                 card.style.transform = 'scale(1)';
                 card.style.opacity = '1';
-                alert("Gagal memperbarui status masakan. Coba lagi.");
+                showToast("Gagal memperbarui status masakan. Coba lagi.", "danger");
             });
         }
     }
@@ -109,7 +109,7 @@
                     console.error("Error completing order:", err);
                     card.style.opacity = '0.9';
                     card.style.transform = 'scale(1)';
-                    alert("Gagal menyelesaikan pesanan. Coba lagi.");
+                    showToast("Gagal menyelesaikan pesanan. Coba lagi.", "danger");
                 });
             }, 400);
         }

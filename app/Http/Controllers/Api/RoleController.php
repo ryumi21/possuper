@@ -8,8 +8,18 @@ use Illuminate\Http\Request;
 
 class RoleController extends Controller
 {
+    private function checkPermission()
+    {
+        $user = auth()->user();
+        $rolesMenu = \App\Models\Menu::where('Fitur', 'Roles')->where('IsPos', $user->IsPos)->first();
+        if (!$user || ($user->IsRole != 1 && (!$rolesMenu || !is_array($user->allowed_menus) || !in_array($rolesMenu->Oid, $user->allowed_menus)))) {
+            abort(403, 'Unauthorized action.');
+        }
+    }
+
     public function index()
     {
+        $this->checkPermission();
         $roles = Role::orderBy('Oid', 'desc')->get();
         return response()->json([
             'status' => 'success',
@@ -19,6 +29,7 @@ class RoleController extends Controller
 
     public function store(Request $request)
     {
+        $this->checkPermission();
         $request->validate([
             'Code' => 'required|string|max:36|unique:role,Code',
             'Name' => 'required|string|max:36',
@@ -35,6 +46,7 @@ class RoleController extends Controller
 
     public function show($id)
     {
+        $this->checkPermission();
         $role = Role::findOrFail($id);
         return response()->json([
             'status' => 'success',
@@ -44,6 +56,7 @@ class RoleController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->checkPermission();
         $request->validate([
             'Code' => 'required|string|max:36|unique:role,Code,' . $id . ',Oid',
             'Name' => 'required|string|max:36',
@@ -61,6 +74,7 @@ class RoleController extends Controller
 
     public function destroy($id)
     {
+        $this->checkPermission();
         $role = Role::findOrFail($id);
         
         // Prevent deleting roles currently assigned to users

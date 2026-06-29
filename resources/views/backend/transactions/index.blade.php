@@ -74,10 +74,10 @@
                                         </button>
                                         
                                         <!-- Delete form -->
-                                        <form action="{{ route('transactions.destroy', $tx->Oid) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus transaksi ini?');" style="display:inline;">
+                                        <form action="{{ route('transactions.destroy', $tx->Oid) }}" method="POST" id="delete-form-{{ $tx->Oid }}" style="display:inline;">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="premium-btn-icon delete-btn" title="Hapus Log">
+                                            <button type="button" class="premium-btn-icon delete-btn" onclick="showConfirm('Apakah Anda yakin ingin menghapus log transaksi ini?', () => document.getElementById('delete-form-{{ $tx->Oid }}').submit())" title="Hapus Log">
                                                 <i class="bi bi-trash text-danger"></i>
                                             </button>
                                         </form>

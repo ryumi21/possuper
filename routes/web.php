@@ -40,6 +40,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/rolepermissions', [\App\Http\Controllers\RolePermissionController::class, 'index'])->name('rolepermissions.index');
     Route::resource('roles', \App\Http\Controllers\RoleController::class)->only(['index']);
 
+    // API Routes under Web session authentication
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::get('rolepermissions', [\App\Http\Controllers\Api\RolePermissionController::class, 'index']);
+        Route::get('rolepermissions/{userId}', [\App\Http\Controllers\Api\RolePermissionController::class, 'show']);
+        Route::put('rolepermissions/{userId}', [\App\Http\Controllers\Api\RolePermissionController::class, 'update']);
+        Route::apiResource('roles', \App\Http\Controllers\Api\RoleController::class);
+        Route::apiResource('users', \App\Http\Controllers\Api\UserController::class);
+        Route::post('users/{user}/reset-password', [\App\Http\Controllers\Api\UserController::class, 'resetPassword']);
+        Route::apiResource('transactions', \App\Http\Controllers\Api\TransactionController::class);
+    });
+
     // Config API (Called on every module)
     Route::get('/api/config', [\App\Http\Controllers\Api\ConfigController::class, 'index']);
 });

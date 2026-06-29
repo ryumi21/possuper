@@ -169,7 +169,11 @@ document.addEventListener("DOMContentLoaded", function() {
 
         fetch(url, {
             method: method,
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
             body: JSON.stringify(payload)
         })
         .then(res => res.json())
@@ -193,7 +197,12 @@ document.addEventListener("DOMContentLoaded", function() {
         const btnDelete = e.target.closest('.btn-delete');
         if (btnDelete) {
             if(confirm('Are you sure you want to delete this role?')) {
-                fetch(`${apiBase}/${btnDelete.dataset.id}`, { method: 'DELETE' })
+                fetch(`${apiBase}/${btnDelete.dataset.id}`, { 
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === 'success') {

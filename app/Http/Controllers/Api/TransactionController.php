@@ -9,10 +9,20 @@ use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
+    private function checkPermission()
+    {
+        $user = auth()->user();
+        $posMenu = \App\Models\Menu::where('Fitur', 'Mesin Kasir (POS)')->where('IsPos', $user->IsPos)->first();
+        if (!$user || ($user->IsRole != 1 && (!$posMenu || !is_array($user->allowed_menus) || !in_array($posMenu->Oid, $user->allowed_menus)))) {
+            abort(403, 'Unauthorized action.');
+        }
+    }
+
     public function store(Request $request)
     {
+        $this->checkPermission();
         $request->validate([
-            'Table_No'     => 'nullable|string|max:100',
+            'Table_No'     => 'required|string|max:100',
             'Status'       => 'required|integer',
             'items'        => 'required|array|min:1',
             'items.*.id'   => 'required|integer',

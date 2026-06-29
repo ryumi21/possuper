@@ -11,9 +11,19 @@ use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
+    private function checkPermission()
+    {
+        $user = auth()->user();
+        $usersMenu = \App\Models\Menu::where('Fitur', 'Users')->where('IsPos', $user->IsPos)->first();
+        if (!$user || ($user->IsRole != 1 && (!$usersMenu || !is_array($user->allowed_menus) || !in_array($usersMenu->Oid, $user->allowed_menus)))) {
+            abort(403, 'Unauthorized action.');
+        }
+    }
+
     public function index()
     {
-        $users = User::with('role')->get();
+        $this->checkPermission();
+        $users = User::with('role')->where('IsPos', auth()->user()->IsPos)->get();
         $roles = Role::all();
         // Return view with users and all available roles for the dropdowns
         return view('backend.users.index', compact('users', 'roles'));
@@ -21,11 +31,13 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        $this->checkPermission();
         $request->validate([
             'Code' => 'required|string|max:36',
             'Name' => 'required|string|max:36',
             'IsRole' => 'required|integer',
             'IsActive' => 'required|boolean',
+            'IsPos' => 'required|integer|in:1,2',
         ]);
         
         $user = User::create($request->all());
@@ -35,11 +47,13 @@ class UserController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->checkPermission();
         $request->validate([
             'Code' => 'required|string|max:36',
             'Name' => 'required|string|max:36',
             'IsRole' => 'required|integer',
             'IsActive' => 'required|boolean',
+            'IsPos' => 'required|integer|in:1,2',
         ]);
 
         $user = User::findOrFail($id);
@@ -50,6 +64,7 @@ class UserController extends Controller
 
     public function destroy($id)
     {
+        $this->checkPermission();
         $user = "SELECT * FROM user where Oid = ($id)";
         $a = db::select($user);
         $user = User::where('Oid', $id)->get();
@@ -64,6 +79,7 @@ class UserController extends Controller
 
     public function resetPassword($id)
     {
+        $this->checkPermission();
         $user = User::findOrFail($id);
         $user->Password = bcrypt('123');
         $user->save();

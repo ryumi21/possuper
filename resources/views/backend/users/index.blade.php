@@ -40,6 +40,7 @@
                             <th class="py-3 fw-medium">User Details <i class="bi bi-arrow-down-up ms-1" style="font-size: 0.7rem; opacity: 0.5;"></i></th>
                             <th class="py-3 fw-medium">Code <i class="bi bi-arrow-down-up ms-1" style="font-size: 0.7rem; opacity: 0.5;"></i></th>
                             <th class="py-3 fw-medium">Role <i class="bi bi-arrow-down-up ms-1" style="font-size: 0.7rem; opacity: 0.5;"></i></th>
+                            <th class="py-3 fw-medium">Sistem POS <i class="bi bi-arrow-down-up ms-1" style="font-size: 0.7rem; opacity: 0.5;"></i></th>
                             <th class="py-3 fw-medium">Status <i class="bi bi-arrow-down-up ms-1" style="font-size: 0.7rem; opacity: 0.5;"></i></th>
                             <th class="text-center py-3 fw-medium">Action</th>
                         </tr>
@@ -118,6 +119,14 @@
                                 <option value="0">Inactive</option>
                             </select>
                         </div>
+                        
+                        <div class="col-md-12">
+                            <label for="IsPos" class="form-label fw-medium text-dark" style="font-size: 0.9rem;">Sistem POS *</label>
+                            <select class="form-select bg-white border" id="IsPos" required>
+                                <option value="1">POS Retail</option>
+                                <option value="2">POS Cafe</option>
+                            </select>
+                        </div>
 
                         <div class="col-12 mt-4 text-end">
                             <button type="button" class="btn btn-light border me-2" data-bs-dismiss="modal">Cancel</button>
@@ -182,6 +191,9 @@ document.addEventListener("DOMContentLoaded", function() {
                         <td class="py-3">
                             <span class="fw-medium text-dark" style="font-size: 0.85rem;">${roleName}</span>
                         </td>
+                        <td class="py-3">
+                            <span class="badge rounded-pill fw-medium px-2 py-1" style="font-size: 0.70rem; ${u.IsPos == 1 ? 'background-color: #3b82f6; color: #fff;' : 'background-color: #ec4899; color: #fff;'}">${u.IsPos == 1 ? 'Retail' : 'Cafe'}</span>
+                        </td>
                         <td class="py-3 ">
                             ${statusHtml}
                         </td>
@@ -211,7 +223,8 @@ document.addEventListener("DOMContentLoaded", function() {
             Code: document.getElementById('Code').value,
             Name: document.getElementById('Name').value,
             IsRole: document.getElementById('IsRole').value,
-            IsActive: document.getElementById('IsActive').value
+            IsActive: document.getElementById('IsActive').value,
+            IsPos: document.getElementById('IsPos').value
         };
 
         const oid = document.getElementById('userOid').value;
@@ -220,7 +233,11 @@ document.addEventListener("DOMContentLoaded", function() {
 
         fetch(url, {
             method: method,
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
             body: JSON.stringify(payload)
         })
         .then(res => res.json())
@@ -238,29 +255,38 @@ document.addEventListener("DOMContentLoaded", function() {
     tbody.addEventListener('click', function(e) {
         const btnDelete = e.target.closest('.btn-delete');
         if (btnDelete) {
-            if(confirm('Are you sure you want to delete this user?')) {
-                fetch(`${apiBase}/${btnDelete.dataset.id}`, { method: 'DELETE' })
+            showConfirm('Are you sure you want to delete this user?', function() {
+                fetch(`${apiBase}/${btnDelete.dataset.id}`, { 
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
                 .then(res => res.json())
                 .then(data => {
                     fetchUsers();
                     showAlert('success', data.message);
                 });
-            }
+            });
             return;
         }
 
         const btnReset = e.target.closest('.btn-reset');
         if (btnReset) {
-            if(confirm('Are you sure you want to reset the password to 123 for this user?')) {
+            showConfirm('Are you sure you want to reset the password to 123 for this user?', function() {
                 fetch(`${apiBase}/${btnReset.dataset.id}/reset-password`, { 
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
                 })
                 .then(res => res.json())
                 .then(data => {
                     showAlert('success', data.message);
                 });
-            }
+            });
             return;
         }
 
@@ -276,6 +302,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 document.getElementById('Name').value = u.Name;
                 document.getElementById('IsRole').value = u.IsRole;
                 document.getElementById('IsActive').value = u.IsActive;
+                document.getElementById('IsPos').value = u.IsPos;
                 currentMode = 'edit';
                 modal.show();
             });

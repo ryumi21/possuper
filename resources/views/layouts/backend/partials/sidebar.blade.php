@@ -42,7 +42,17 @@
                 </a>
             </div> -->
 
+            @php
+                $_user = auth()->user();
+                $_posMenu = \App\Models\Menu::where('Fitur', 'Mesin Kasir (POS)')->where('IsPos', $_user ? $_user->IsPos : 1)->first();
+                $_txMenu = \App\Models\Menu::where('Fitur', 'Log Transaksi')->where('IsPos', $_user ? $_user->IsPos : 1)->first();
+                $_usersMenu = \App\Models\Menu::where('Fitur', 'Users')->where('IsPos', $_user ? $_user->IsPos : 1)->first();
+                $_rolePermissionMenu = \App\Models\Menu::where('Fitur', 'Role Permission')->where('IsPos', $_user ? $_user->IsPos : 1)->first();
+                $_rolesMenu = \App\Models\Menu::where('Fitur', 'Roles')->where('IsPos', $_user ? $_user->IsPos : 1)->first();
+            @endphp
+
             <!-- Other Main Items -->
+            @if($_user && ($_user->IsRole == 1 || ($_posMenu && is_array($_user->allowed_menus) && in_array($_posMenu->Oid, $_user->allowed_menus))))
             <li class="nav-item mb-1 mt-2">
                 <a href="{{ route('pos.index') }}"
                     class="nav-link nav-link-custom {{ request()->routeIs('pos.*') ? 'active' : 'text-muted' }} d-flex align-items-center px-3 py-2 fw-medium">
@@ -50,6 +60,9 @@
                     Mesin Kasir (POS)
                 </a>
             </li>
+            @endif
+
+            @if($_user && ($_user->IsRole == 1 || ($_txMenu && is_array($_user->allowed_menus) && in_array($_txMenu->Oid, $_user->allowed_menus))))
             <li class="nav-item mb-1">
                 <a href="{{ route('transactions.index') }}"
                     class="nav-link nav-link-custom {{ request()->routeIs('transactions.*') ? 'active' : 'text-muted' }} d-flex align-items-center px-3 py-2 fw-medium">
@@ -57,6 +70,9 @@
                     Log Transaksi
                 </a>
             </li>
+            @endif
+
+            @if($_user && ($_user->IsRole == 1 || ($_usersMenu && is_array($_user->allowed_menus) && in_array($_usersMenu->Oid, $_user->allowed_menus))))
             <li class="nav-item mb-1">
                 <a href="{{ route('users.index') }}"
                     class="nav-link nav-link-custom {{ request()->routeIs('users.*') ? 'active' : 'text-muted' }} d-flex align-items-center px-3 py-2 fw-medium">
@@ -64,6 +80,9 @@
                     Users
                 </a>
             </li>
+            @endif
+
+            @if($_user && ($_user->IsRole == 1 || ($_rolePermissionMenu && is_array($_user->allowed_menus) && in_array($_rolePermissionMenu->Oid, $_user->allowed_menus))))
             <li class="nav-item mb-1">
                 <a href="{{ route('rolepermissions.index') }}"
                     class="nav-link nav-link-custom {{ request()->routeIs('rolepermissions.*') ? 'active' : 'text-muted' }} d-flex align-items-center px-3 py-2 fw-medium">
@@ -71,6 +90,9 @@
                     Role Permission
                 </a>
             </li>
+            @endif
+
+            @if($_user && ($_user->IsRole == 1 || ($_rolesMenu && is_array($_user->allowed_menus) && in_array($_rolesMenu->Oid, $_user->allowed_menus))))
             <li class="nav-item mb-1">
                 <a href="{{ route('roles.index') }}"
                     class="nav-link nav-link-custom {{ request()->routeIs('roles.*') ? 'active' : 'text-muted' }} d-flex align-items-center px-3 py-2 fw-medium">
@@ -78,6 +100,7 @@
                     Roles
                 </a>
             </li>
+            @endif
             <!-- <li class="nav-item mb-1">
                 <a href="#"
                     class="nav-link nav-link-custom text-muted d-flex align-items-center justify-content-between px-3 py-2 fw-medium">
@@ -101,17 +124,22 @@
             <!-- Disaat nanti API Initial udah ada gunakan payload initial jangan ambil dari database IsPos Lagi -->
             @php
                 $user = auth()->user();
+                $excludeFeatures = ['Role Permission', 'Roles', 'Mesin Kasir (POS)', 'Log Transaksi', 'Users'];
                 
                 if ($user && $user->IsRole == 1) {
-                    // SuperAdmin (IsRole = 1) gets access to all active menus
+                    // SuperAdmin (IsRole = 1) gets access to all active menus matching their IsPos
                     $groupedMenus = \App\Models\Menu::where('Is_Active', 1)
+                        ->where('IsPos', $user->IsPos)
+                        ->whereNotIn('Fitur', $excludeFeatures)
                         ->get()
                         ->groupBy('Category');
                 } else {
                     $allowedMenus = $user ? $user->allowed_menus : null;
                     if (is_array($allowedMenus)) {
                         $groupedMenus = \App\Models\Menu::where('Is_Active', 1)
+                            ->where('IsPos', $user ? $user->IsPos : 1)
                             ->whereIn('Oid', $allowedMenus)
+                            ->whereNotIn('Fitur', $excludeFeatures)
                             ->get()
                             ->groupBy('Category');
                     } else {

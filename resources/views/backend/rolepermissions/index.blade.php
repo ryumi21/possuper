@@ -266,7 +266,8 @@ document.addEventListener("DOMContentLoaded", function() {
             method: 'PUT',
             headers: { 
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
             body: JSON.stringify({ menu_ids: menuIds })
         })

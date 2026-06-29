@@ -102,8 +102,8 @@
                 
                 <!-- Input Nomor Meja -->
                 <div class="bg-light border-bottom p-2 d-flex align-items-center gap-2 px-3">
-                    <span class="text-dark fw-bold small flex-shrink-0" style="font-size: 0.82rem;"><i class="bi bi-hash text-warning"></i> No. Meja:</span>
-                    <input type="text" id="tableNumberInput" class="form-control form-control-sm bg-white border" placeholder="Set Nomor Meja (opsional)..." style="border-radius: 8px; font-weight: 600; font-size: 0.8rem; height: 32px;">
+                    <span class="text-dark fw-bold small flex-shrink-0" style="font-size: 0.82rem;"><i class="bi bi-hash text-warning"></i> No. Meja <span class="text-danger">*</span>:</span>
+                    <input type="text" id="tableNumberInput" class="form-control form-control-sm bg-white border" placeholder="Masukkan Nomor Meja (wajib)..." style="border-radius: 8px; font-weight: 600; font-size: 0.8rem; height: 32px;">
                 </div>
                 
                 <!-- Cart items list scrollable -->
@@ -1040,12 +1040,13 @@
     window.clearCartConfirm = function() {
         const tableNumInput = document.getElementById('tableNumberInput');
         if(cart.length > 0 || (tableNumInput && tableNumInput.value !== '')) {
-            if(confirm('Yakin ingin membatalkan/mengosongkan semua pesanan?')) {
+            showConfirm('Yakin ingin membatalkan/mengosongkan semua pesanan?', function() {
                 cart = [];
                 currentDiscount = 0;
                 if(tableNumInput) tableNumInput.value = '';
                 renderCart();
-            }
+                showToast('Semua pesanan berhasil dibatalkan.', 'info');
+            });
         }
     }
 
@@ -1223,7 +1224,15 @@
     // Trigger Payment Modal
     window.processCheckout = function() {
         if(cart.length === 0) {
-            alert('Keranjang masih kosong! Silakan pilih produk terlebih dahulu.');
+            showToast('Keranjang masih kosong! Silakan pilih produk terlebih dahulu.', 'warning');
+            return;
+        }
+
+        // Validasi nomor meja wajib diisi
+        const tableNumInput = document.getElementById('tableNumberInput');
+        if (!tableNumInput || !tableNumInput.value.trim()) {
+            showToast('Nomor meja wajib diisi sebelum memproses tagihan!', 'warning');
+            if (tableNumInput) tableNumInput.focus();
             return;
         }
         
@@ -1259,7 +1268,7 @@
         let change = cash - finalTotal;
         
         if (method === 'Tunai' && cash < finalTotal) {
-            alert('Uang yang diterima kurang dari total tagihan!');
+            showToast('Uang yang diterima kurang dari total tagihan!', 'danger');
             return;
         }
         
@@ -1314,12 +1323,12 @@
                 if(tableNumInput) tableNumInput.value = '';
                 renderCart();
             } else {
-                alert('Gagal menyimpan transaksi: ' + (data.message || 'Error'));
+                showToast('Gagal menyimpan transaksi: ' + (data.message || 'Error'), 'danger');
             }
         })
         .catch(err => {
             console.error('Checkout error:', err);
-            alert('Gagal menyimpan transaksi ke server.');
+            showToast('Gagal menyimpan transaksi ke server.', 'danger');
         })
         .finally(() => {
             btnConfirm.disabled = false;
